@@ -53,16 +53,8 @@ int main()
 	// Inicialização da GLFW
 	glfwInit();
 
-	//glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	//glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-	//glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-//#ifdef __APPLE__
-//	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-//#endif
-
 	// Criação da janela GLFW
-	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Ola Triangulo!", nullptr, nullptr);
+	GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "Exercicio 1", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
 
 	// Fazendo o registro da função de callback para a janela GLFW
@@ -92,7 +84,6 @@ int main()
 
 	// Gerando um buffer simples, com a geometria de um triângulo
 	GLuint VAO = setupGeometry();
-	
 
 	// Enviando a cor desejada (vec4) para o fragment shader
 	// Utilizamos a variáveis do tipo uniform em GLSL para armazenar esse tipo de info
@@ -117,16 +108,10 @@ int main()
 
 		// Chamada de desenho - drawcall
 		// Poligono Preenchido - GL_TRIANGLES
-		glUniform4f(colorLoc, 1.0f, 0.0f, 0.0f, 1.0f);
+		glUniform4f(colorLoc, 1.0f, 1.0f, 0.0f, 1.0f);
 		glUseProgram(shaderID);
 		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-
-		// Chamada de desenho - drawcall
-		// CONTORNO - GL_LINE_LOOP
-		glUniform4f(colorLoc, 0.0f, 0.0f, 0.0f, 1.0f);
-		glDrawArrays(GL_LINE_LOOP, 0, 3);
-		glBindVertexArray(0);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 
 		// Troca os buffers da tela
 		glfwSwapBuffers(window);
@@ -207,9 +192,12 @@ int setupGeometry()
 	// Cada atributo do vértice (coordenada, cores, coordenadas de textura, normal, etc)
 	// Pode ser arazenado em um VBO único ou em VBOs separados
 	GLfloat vertices[] = {
-		-0.5, -0.5, 0.0,
-		 0.5, -0.5, 0.0,
-		 0.0, 0.5, 0.0,
+		-1.0, 0.0, 0.0,
+		 -0.5, 1.0, 0.0,
+		 0.0, 0.0, 0.0,
+		 0.0, 0.0, 0.0,
+		 0.5, -1.0, 0.0,
+		 1.0, 0.0, 0.0
 	};
 
 	GLuint VBO, VAO;
