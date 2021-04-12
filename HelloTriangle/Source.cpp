@@ -25,12 +25,19 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 // Protótipos das funções
 int setupShader();
-int setupFilledTriangle();
-int setupLineTriangle();
-int setupVertexOnlyTriangle();
+int setupForVertices(GLfloat vertices[]);
+int setupForVerticesWithIndices(GLfloat vertices[], GLuint indices[]);
+int setupFloor();
+int setupLeftTreeTop();
+int setupLeftTreeLog();
+int setupHouseStructure();
+int setupHouseDoor();
+int setupHouseCeiling();
+int setupRightTreeTop();
+int setupRightTreeLog();
 
 // Dimensões da janela (pode ser alterado em tempo de execução)
-const GLuint WIDTH = 800, HEIGHT = 600;
+const GLuint WIDTH = 400, HEIGHT = 300;
 
 // Código fonte do Vertex Shader (em GLSL): ainda hardcoded
 const GLchar* vertexShaderSource = "#version 430\n"
@@ -92,10 +99,18 @@ int main()
 	// Compilando e buildando o programa de shader
 	GLuint shaderID = setupShader();
 
-	// Gerando um buffer simples, com a geometria de um triângulo
-	GLuint filledTriangleVAO = setupFilledTriangle();
-	GLuint lineTriangleVAO = setupLineTriangle();
-	GLuint vertexOnlyTriangleVAO = setupVertexOnlyTriangle();
+	//Buffers
+	GLuint floorVAO = setupFloor();
+
+	GLuint leftTreeTopVAO = setupLeftTreeTop();
+	/*GLuint leftTreeLogVAO = setupLeftTreeLog();
+
+	GLuint houseStructureVAO = setupHouseStructure();
+	GLuint houseDoorVAO = setupHouseDoor();
+	GLuint houseCeilingVAO = setupHouseCeiling();
+
+	GLuint rightTreeTopVAO = setupRightTreeTop();
+	GLuint rightTreeLogVAO = setupRightTreeLog();*/
 
 	// Enviando a cor desejada (vec4) para o fragment shader
 	// Utilizamos a variáveis do tipo uniform em GLSL para armazenar esse tipo de info
@@ -112,40 +127,33 @@ int main()
 		glfwPollEvents();
 
 		// Limpa o buffer de cor
-		glClearColor(0, 0, 0, 1.0f); //cor de fundo
+		glClearColor(1, 1, 1, 1.0f); //cor de fundo
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glLineWidth(5);
-		glPointSize(10);
+		glLineWidth(3);
 
-		// Chamada de desenho - drawcall
-		// Poligono Preenchido - GL_TRIANGLES
-		glUniform4f(colorLoc, 1.0f, 0.0f, 0.0f, 1.0f);
+		//drawcalls
+		// Chão
+		glUniform4f(colorLoc, 0.1f, 0.5f, 0.0f, 1.0f);
 		glUseProgram(shaderID);
-		glBindVertexArray(filledTriangleVAO);
+		glBindVertexArray(floorVAO);
+		glDrawArrays(GL_LINES, 0, 2);
+		glBindVertexArray(0);
+
+		glUniform4f(colorLoc, 0.1f, 0.5f, 0.0f, 1.0f);
+		glUseProgram(shaderID);
+		glBindVertexArray(leftTreeTopVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		glBindVertexArray(0);
 
-		// Chamada de desenho - drawcall
-		// CONTORNO - GL_LINE_LOOP
-		glUniform4f(colorLoc, 0.0f, 1.0f, 0.0f, 1.0f);
-		glBindVertexArray(lineTriangleVAO);
-		glDrawArrays(GL_LINE_LOOP, 0, 3);
-		glBindVertexArray(0);
-
-		glUniform4f(colorLoc, 0.0f, 0.0f, 1.0f, 1.0f);
-		glBindVertexArray(vertexOnlyTriangleVAO);
-		glDrawArrays(GL_POINTS, 0, 3);
-		glBindVertexArray(0);
 
 		// Troca os buffers da tela
 		glfwSwapBuffers(window);
 	}
 	// Pede pra OpenGL desalocar os buffers
-	glDeleteVertexArrays(1, &filledTriangleVAO);
-	glDeleteVertexArrays(1, &lineTriangleVAO);
-	glDeleteVertexArrays(1, &vertexOnlyTriangleVAO);
-
+	glDeleteVertexArrays(1, &floorVAO);
+	glDeleteVertexArrays(1, &leftTreeTopVAO);
+	
 	// Finaliza a execução da GLFW, limpando os recursos alocados por ela
 	glfwTerminate();
 	return 0;
@@ -208,13 +216,8 @@ int setupShader()
 	return shaderProgram;
 }
 
-int setupFilledTriangle() {
-	GLfloat vertices[] = {
-		-1, 0, 0,
-		-0.5, 1, 0,
-		0, 0, 0
-	};
-
+int setupForVertices(GLfloat vertices[])
+{
 	GLuint VBO, VAO;
 
 	glGenBuffers(1, &VBO);
@@ -231,49 +234,143 @@ int setupFilledTriangle() {
 	return VAO;
 }
 
-int setupLineTriangle() {
-	GLfloat vertices[] = {
-		0, 0, 0,
-		0.5, 1, 0,
+int setupForVerticesWithIndices(GLfloat vertices[], GLuint indices[])
+{
+	GLuint VBO, VAO, EBO;
+
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glBindVertexArray(0);
+
+	return VAO;
+}
+
+int setupFloor() 
+{
+	GLfloat vertices[] = 
+	{
+		-1, 0, 0,
 		1, 0, 0
 	};
 
-	GLuint VBO, VAO;
-
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
-
-	return VAO;
+	return setupForVertices(vertices);
 }
 
-int setupVertexOnlyTriangle() {
-	GLfloat vertices[] = {
-		-0.2, 0.8, 0,
-		0, 0.4, 0,
-		0.2, 0.8, 0
+int setupLeftTreeTop() 
+{
+	GLfloat vertices[] = 
+	{
+		-0.4, 0.2, 0,
+		-0.3, 0.8, 0,
+		-0.2, 0.2, 0
 	};
 
-	GLuint VBO, VAO;
+	return setupForVertices(vertices);
+}
 
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+int setupLeftTreeLog() 
+{
+	GLfloat vertices[] = 
+	{
+		-0.35, 0, 0,
+		-0.35, 0.2, 0,
+		-0.25, 0.2, 0,
+		-0.25, 0, 0
+	};
 
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+	GLuint indices[] = 
+	{
+		0, 1, 2,
+		0, 2, 3
+	};
 
-	return VAO;
+	return setupForVerticesWithIndices(vertices, indices);
+}
+
+int setupHouseStructure() 
+{
+	GLfloat vertices[] = 
+	{
+		0.25, 0, 0,
+		0.25, 0.4, 0,
+		0.5, 0.4, 0,
+		0.5, 0, 0
+	};
+
+	return setupForVertices(vertices);
+}
+
+int setupHouseDoor() 
+{
+	GLfloat vertices[] = 
+	{
+		0.35, 0, 0,
+		0.35, 0.18, 0,
+		0.40, 0.18, 0,
+		0.40, 0, 0
+	};
+
+	GLuint indices[] = 
+	{
+		0, 1, 2,
+		0, 2, 3
+	};
+
+	return setupForVerticesWithIndices(vertices, indices);
+}
+
+int setupHouseCeiling() 
+{
+	GLfloat vertices[] = 
+	{
+		0.25, 0.4, 0,
+		0.375, 0.6, 0,
+		0.5, 0.4, 0
+	};
+
+	return setupForVertices(vertices);
+}
+
+int setupRightTreeTop() 
+{
+	GLfloat vertices[] = 
+	{
+		0.6, 0.4 , 0,
+		0.7, 0.9, 0,
+		0.8, 0.4, 0
+	};
+
+	return setupForVertices(vertices);
+}
+
+int setupRightTreeLog() 
+{
+	GLfloat vertices[] = 
+	{
+		0.65, 0, 0,
+		0.65, 0.4, 0,
+		0.70, 0.4, 0,
+		0.70, 0, 0
+	};
+
+	GLuint indices[] = 
+	{
+		0, 1, 2,
+		0, 2, 3
+	};
+
+	return setupForVerticesWithIndices(vertices, indices);
 }
 
