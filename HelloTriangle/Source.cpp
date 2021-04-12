@@ -25,7 +25,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 // Protótipos das funções
 int setupShader();
-int setupForVertices(GLfloat vertices[]);
+int setupForVertices(GLfloat *vertices);
 int setupForVerticesWithIndices(GLfloat vertices[], GLuint indices[]);
 int setupFloor();
 int setupLeftTreeTop();
@@ -37,7 +37,7 @@ int setupRightTreeTop();
 int setupRightTreeLog();
 
 // Dimensões da janela (pode ser alterado em tempo de execução)
-const GLuint WIDTH = 400, HEIGHT = 300;
+const GLuint WIDTH = 800, HEIGHT = 600;
 
 // Código fonte do Vertex Shader (em GLSL): ainda hardcoded
 const GLchar* vertexShaderSource = "#version 430\n"
@@ -103,14 +103,14 @@ int main()
 	GLuint floorVAO = setupFloor();
 
 	GLuint leftTreeTopVAO = setupLeftTreeTop();
-	/*GLuint leftTreeLogVAO = setupLeftTreeLog();
+	GLuint leftTreeLogVAO = setupLeftTreeLog();
 
 	GLuint houseStructureVAO = setupHouseStructure();
 	GLuint houseDoorVAO = setupHouseDoor();
 	GLuint houseCeilingVAO = setupHouseCeiling();
 
 	GLuint rightTreeTopVAO = setupRightTreeTop();
-	GLuint rightTreeLogVAO = setupRightTreeLog();*/
+	GLuint rightTreeLogVAO = setupRightTreeLog();
 
 	// Enviando a cor desejada (vec4) para o fragment shader
 	// Utilizamos a variáveis do tipo uniform em GLSL para armazenar esse tipo de info
@@ -131,21 +131,53 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glLineWidth(3);
+		
+		glUseProgram(shaderID);
 
 		//drawcalls
 		// Chão
 		glUniform4f(colorLoc, 0.1f, 0.5f, 0.0f, 1.0f);
-		glUseProgram(shaderID);
 		glBindVertexArray(floorVAO);
 		glDrawArrays(GL_LINES, 0, 2);
 		glBindVertexArray(0);
 
+		// Árvore
 		glUniform4f(colorLoc, 0.1f, 0.5f, 0.0f, 1.0f);
-		glUseProgram(shaderID);
 		glBindVertexArray(leftTreeTopVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		glBindVertexArray(0);
 
+		glUniform4f(colorLoc, 0.3f, 0.2f, 0.0f, 1.0f);
+		glBindVertexArray(leftTreeLogVAO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+
+		// Casa
+		glUniform4f(colorLoc, 0.7f, 0.6f, 0.4f, 1.0f);
+		glBindVertexArray(houseStructureVAO);
+		glDrawArrays(GL_LINE_LOOP, 0, 4);
+		glBindVertexArray(0);
+
+		glUniform4f(colorLoc, 0.3f, 0.2f, 0.0f, 1.0f);
+		glBindVertexArray(houseDoorVAO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+
+		glUniform4f(colorLoc, 0.7f, 0.5f, 0.9f, 1.0f);
+		glBindVertexArray(houseCeilingVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glBindVertexArray(0);
+
+		// Árvore
+		glUniform4f(colorLoc, 0.1f, 0.5f, 0.0f, 1.0f);
+		glBindVertexArray(rightTreeTopVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glBindVertexArray(0);
+
+		glUniform4f(colorLoc, 0.3f, 0.2f, 0.0f, 1.0f);
+		glBindVertexArray(rightTreeLogVAO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
 
 		// Troca os buffers da tela
 		glfwSwapBuffers(window);
@@ -153,6 +185,11 @@ int main()
 	// Pede pra OpenGL desalocar os buffers
 	glDeleteVertexArrays(1, &floorVAO);
 	glDeleteVertexArrays(1, &leftTreeTopVAO);
+	glDeleteVertexArrays(1, &houseStructureVAO);
+	glDeleteVertexArrays(1, &houseDoorVAO);
+	glDeleteVertexArrays(1, &houseCeilingVAO);
+	glDeleteVertexArrays(1, &rightTreeLogVAO);
+	glDeleteVertexArrays(1, &rightTreeTopVAO);
 	
 	// Finaliza a execução da GLFW, limpando os recursos alocados por ela
 	glfwTerminate();
@@ -216,8 +253,14 @@ int setupShader()
 	return shaderProgram;
 }
 
-int setupForVertices(GLfloat vertices[])
+int setupFloor() 
 {
+	GLfloat vertices[] = 
+	{
+		-1, 0, 0,
+		1, 0, 0
+	};
+
 	GLuint VBO, VAO;
 
 	glGenBuffers(1, &VBO);
@@ -234,40 +277,6 @@ int setupForVertices(GLfloat vertices[])
 	return VAO;
 }
 
-int setupForVerticesWithIndices(GLfloat vertices[], GLuint indices[])
-{
-	GLuint VBO, VAO, EBO;
-
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	glGenVertexArrays(1, &VAO);
-	glBindVertexArray(VAO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-	glBindVertexArray(0);
-
-	return VAO;
-}
-
-int setupFloor() 
-{
-	GLfloat vertices[] = 
-	{
-		-1, 0, 0,
-		1, 0, 0
-	};
-
-	return setupForVertices(vertices);
-}
-
 int setupLeftTreeTop() 
 {
 	GLfloat vertices[] = 
@@ -277,7 +286,20 @@ int setupLeftTreeTop()
 		-0.2, 0.2, 0
 	};
 
-	return setupForVertices(vertices);
+	GLuint VBO, VAO;
+
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	return VAO;
 }
 
 int setupLeftTreeLog() 
@@ -296,7 +318,25 @@ int setupLeftTreeLog()
 		0, 2, 3
 	};
 
-	return setupForVerticesWithIndices(vertices, indices);
+	GLuint VBO, VAO, EBO;
+
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glBindVertexArray(0);
+
+	return VAO;
 }
 
 int setupHouseStructure() 
@@ -304,12 +344,25 @@ int setupHouseStructure()
 	GLfloat vertices[] = 
 	{
 		0.25, 0, 0,
-		0.25, 0.4, 0,
-		0.5, 0.4, 0,
+		0.25, 0.25, 0,
+		0.5, 0.25, 0,
 		0.5, 0, 0
 	};
 
-	return setupForVertices(vertices);
+	GLuint VBO, VAO;
+
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	return VAO;
 }
 
 int setupHouseDoor() 
@@ -317,8 +370,8 @@ int setupHouseDoor()
 	GLfloat vertices[] = 
 	{
 		0.35, 0, 0,
-		0.35, 0.18, 0,
-		0.40, 0.18, 0,
+		0.35, 0.12, 0,
+		0.40, 0.12, 0,
 		0.40, 0, 0
 	};
 
@@ -328,19 +381,50 @@ int setupHouseDoor()
 		0, 2, 3
 	};
 
-	return setupForVerticesWithIndices(vertices, indices);
+	GLuint VBO, VAO, EBO;
+
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glBindVertexArray(0);
+
+	return VAO;
 }
 
 int setupHouseCeiling() 
 {
 	GLfloat vertices[] = 
 	{
-		0.25, 0.4, 0,
-		0.375, 0.6, 0,
-		0.5, 0.4, 0
+		0.25, 0.25, 0,
+		0.375, 0.5, 0,
+		0.5, 0.25, 0
 	};
 
-	return setupForVertices(vertices);
+	GLuint VBO, VAO;
+
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	return VAO;
 }
 
 int setupRightTreeTop() 
@@ -352,17 +436,30 @@ int setupRightTreeTop()
 		0.8, 0.4, 0
 	};
 
-	return setupForVertices(vertices);
+	GLuint VBO, VAO;
+
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	return VAO;
 }
 
 int setupRightTreeLog() 
 {
 	GLfloat vertices[] = 
 	{
-		0.65, 0, 0,
-		0.65, 0.4, 0,
-		0.70, 0.4, 0,
-		0.70, 0, 0
+		0.67, 0, 0,
+		0.67, 0.4, 0,
+		0.73, 0.4, 0,
+		0.73, 0, 0
 	};
 
 	GLuint indices[] = 
@@ -371,6 +468,24 @@ int setupRightTreeLog()
 		0, 2, 3
 	};
 
-	return setupForVerticesWithIndices(vertices, indices);
+	GLuint VBO, VAO, EBO;
+
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glBindVertexArray(0);
+
+	return VAO;
 }
 
